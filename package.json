@@ -1,9 +1,11 @@
 {
+  "type": "module",
   "name": "tuiter-node-server-app-cs5610-07-sp23",
   "version": "1.0.0",
   "description": "Simple HTTP Server",
   "main": "app.js",
   "scripts": {
+    "start": "node app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [

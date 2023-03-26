@@ -1,16 +1,19 @@
-const express = require('express')
-const cors = require('cors')
-const app = express()
-app.use(cors())
-const port = 4000
-const MathController = require('./math/math-controller')
-const UserController = require('./users/users-controller')
+import express from "express";
+import cors from "cors";
+import MathController from "./math/math-controller.js";
+import UserController from "./users/users-controller.js";
+import TuiterController from "./tuiter/tuiter-controller.js";
+const app = express();
+app.use(cors());
+app.use(express.json());
+const port = 4000;
 
-app.get('/', (req, res) => {
-  res.send('Hello World!')
-})
+app.get("/", (req, res) => {
+  res.send("Hello World!");
+});
 
-MathController(app)
-UserController(app)
+TuiterController(app);
+MathController(app);
+UserController(app);
 
-app.listen(port)
+app.listen(port);
