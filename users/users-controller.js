@@ -1,42 +1,52 @@
 import users from "./users.js";
+import * as usersDao from "./users-dao.js";
 
 let currentUser = null;
 
 const UserController = (app) => {
-  const findAllUsers = (req, res) => {
-    if (currentUser && currentUser.isAdmin) {
-      res.json(users);
-    } else {
-      res.sendStatus(403);
-    }
+  const findAllUsers = async (req, res) => {
+    // if (currentUser && currentUser.isAdmin) {
+    const users = await usersDao.findAllUsers();
+    res.json(users);
+    // } else {
+    //   res.sendStatus(403);
+    // }
   };
-  const findUserById = (req, res) => {
-    const userId = req.params.userId;
-    const user = users.find((user) => user._id === userId);
+  const findUserById = async (req, res) => {
+    // const userId = req.params.userId;
+    // const user = users.find((user) => user._id === userId);
+    // if (user) {
+    //   res.json(user);
+    // } else {
+    //   res.sendStatus(404);
+    // }
+    const user = await usersDao.findUserById(req.params.userId);
     if (user) {
       res.json(user);
-    } else {
-      res.sendStatus(404);
+      return;
     }
+    res.sendStatus(404);
   };
 
-  const createUser = (req, res) => {
+  const createUser = async (req, res) => {
     const user = { ...req.body, _id: new Date().getTime() + "" };
     users.push(user);
     res.json(user);
   };
-  const updateUser = (req, res) => {
+  const updateUser = async (req, res) => {
     const userId = req.params.userId;
-    const newUser = req.body;
-    const index = users.findIndex((user) => user._id === userId);
-    if (index === -1) {
-      res.sendStatus(404);
-      return;
-    }
-    users[index] = newUser;
-    res.sendStatus(200);
+    // const newUser = req.body;
+    // const index = users.findIndex((user) => user._id === userId);
+    // if (index === -1) {
+    //   res.sendStatus(404);
+    //   return;
+    // }
+    // users[index] = newUser;
+    const status = await usersDao.updateUser(userId, req.body);
+    req.session["currentUser"] = req.body;
+    res.send(status);
   };
-  const deleteUser = (req, res) => {
+  const deleteUser = async (req, res) => {
     const userId = req.params.userId;
     const index = users.findIndex((user) => user._id === userId);
     if (index === -1) {
@@ -47,7 +57,7 @@ const UserController = (app) => {
     res.sendStatus(200);
   };
 
-  const register = (req, res) => {
+  const register = async (req, res) => {
     const username = req.body.username;
     const password = req.body.password;
     const user = users.find((user) => user.username === username);
@@ -56,35 +66,39 @@ const UserController = (app) => {
       return;
     }
     const newUser = { username, password, _id: new Date().getTime() + "" };
-    currentUser = newUser;
+    req.session["currentUser"] = newUser;
     users.push(newUser);
     res.json(newUser);
   };
 
-  let currentUser = null;
+  // let currentUser = null;
   app.post("/api/users/register", register);
-  app.post("/api/users/login", (req, res) => {
+  app.post("/api/users/login", async (req, res) => {
     const username = req.body.username;
     const password = req.body.password;
-    const user = users.find(
-      (user) => user.username === username && user.password === password
-    );
+    console.log(username, password);
+    // const user = users.find(
+    //   (user) => user.username === username && user.password === password
+    // );
+    const user = await usersDao.findUserByCredentials(username, password);
+    console.log(user);
     if (user) {
-      currentUser = user;
+      req.session["currentUser"] = user;
       res.json(user);
     } else {
       res.sendStatus(404);
     }
   });
-  app.post("/api/users/profile", (req, res) => {
-    if (!currentUser) {
+  app.post("/api/users/profile", async (req, res) => {
+    if (!req.session["currentUser"]) {
       res.sendStatus(404);
       return;
     }
-    res.json(currentUser);
+    res.json(req.session["currentUser"]);
   });
-  app.post("/api/users/logout", (req, res) => {
-    currentUser = null;
+  app.post("/api/users/logout", async (req, res) => {
+    // currentUser = null;
+    req.session.destroy();
     res.sendStatus(200);
   });
 

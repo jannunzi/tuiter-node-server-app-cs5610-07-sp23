@@ -1,17 +1,17 @@
 export default [
   {
-    text: "Tuit 1",
     _id: "123",
+    text: "Tuit 1 coming from the array",
     editing: false,
   },
   {
-    text: "Tuit 2",
     _id: "234",
+    text: "Tuit 2",
     editing: true,
   },
   {
-    text: "Tuit 3",
     _id: "345",
+    text: "Tuit 3",
     editing: false,
   },
   {
