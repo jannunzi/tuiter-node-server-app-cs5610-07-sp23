@@ -1,8 +1,6 @@
 import users from "./users.js";
 import * as usersDao from "./users-dao.js";
 
-let currentUser = null;
-
 const UserController = (app) => {
   const findAllUsers = async (req, res) => {
     // if (currentUser && currentUser.isAdmin) {
@@ -20,7 +18,7 @@ const UserController = (app) => {
     // } else {
     //   res.sendStatus(404);
     // }
-    const user = await usersDao.findUserById(req.params.userId);
+    const user = await usersDao.findUserById(req.params.uid);
     if (user) {
       res.json(user);
       return;
@@ -60,50 +58,53 @@ const UserController = (app) => {
   const register = async (req, res) => {
     const username = req.body.username;
     const password = req.body.password;
-    const user = users.find((user) => user.username === username);
+    const user = await usersDao.findUserByUsername(username);
     if (user) {
       res.sendStatus(409);
       return;
     }
-    const newUser = { username, password, _id: new Date().getTime() + "" };
+    const newUser = await usersDao.createUser(req.body);
     req.session["currentUser"] = newUser;
-    users.push(newUser);
     res.json(newUser);
   };
 
-  // let currentUser = null;
-  app.post("/api/users/register", register);
-  app.post("/api/users/login", async (req, res) => {
+  const login = async (req, res) => {
     const username = req.body.username;
     const password = req.body.password;
-    console.log(username, password);
-    // const user = users.find(
-    //   (user) => user.username === username && user.password === password
-    // );
     const user = await usersDao.findUserByCredentials(username, password);
-    console.log(user);
     if (user) {
       req.session["currentUser"] = user;
       res.json(user);
     } else {
       res.sendStatus(404);
     }
-  });
-  app.post("/api/users/profile", async (req, res) => {
-    if (!req.session["currentUser"]) {
+  };
+
+  const profile = async (req, res) => {
+    const currentUser = req.session["currentUser"];
+    if (!currentUser) {
       res.sendStatus(404);
       return;
     }
-    res.json(req.session["currentUser"]);
-  });
-  app.post("/api/users/logout", async (req, res) => {
+    res.json(currentUser);
+  };
+
+  const logout = async (req, res) => {
     // currentUser = null;
     req.session.destroy();
     res.sendStatus(200);
-  });
+  };
+
+  // let currentUser = null;
+  app.post("/api/users/register", register);
+  app.post("/api/users/login", login);
+  app.post("/api/users/profile", profile);
+  app.post("/api/users/logout", logout);
+  app.get("/api/users/profile", profile);
+  app.get("/api/users/profile/:uid", findUserById);
 
   app.get("/api/users", findAllUsers);
-  app.get("/api/users/:userId", findUserById);
+  // app.get("/api/users/:userId", findUserById);
   app.post("/api/users", createUser);
   app.put("/api/users/:userId", updateUser);
   app.delete("/api/users/:userId", deleteUser);
